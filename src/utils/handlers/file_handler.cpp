@@ -1,11 +1,7 @@
 #include "file_handler.hpp"
 
-FileHandler::FileHandler(std::string fp){
-    this->file_path = fp;
-}
-
-void FileHandler::validCheck(ClubData cd){
-    std::ifstream file(file_path);
+void FileHandler::validCheck(ClubData &cd, std::string fp){
+    std::ifstream file(fp);
     if(file.is_open()){
         std::string temp_str;
 
@@ -39,20 +35,23 @@ void FileHandler::validCheck(ClubData cd){
             exit(0);
         }
 
-        std::cout<<"tables_count: "<<cd.tables_count<<std::endl;
-        std::cout<<"open_time: "<<cd.open_time<<"_\n";
-        std::cout<<"close_time: "<<cd.close_time<<"_\n";
-        std::cout<<"price_per_hour: "<<cd.price_per_hour<<std::endl;
-
+        std::string time_str = "";
         while(std::getline(file, temp_str)){
             if(std::regex_match(temp_str, event_regex)){
-                std::cout<<temp_str<<std::endl;
+                if(time_str < temp_str.substr(0, temp_str.find(' '))){
+                    time_str = temp_str.substr(0, temp_str.find(' '));
+                }else{
+                    std::cout<<temp_str;
+                    exit(0);
+                }
             }else{
                 std::cout<<temp_str;
                 exit(0);
             }
         }
+
+        std::cout<<"Файл соответствует требованиям к входным данным\n";
     }else{
-        std::cout<<"РќРµ СѓРґР°Р»РѕСЃСЊ РѕС‚РєСЂС‹С‚СЊ С„Р°Р№Р»\n";
+        std::cout<<"Не удалось открыть файл\n";
     }
 }
