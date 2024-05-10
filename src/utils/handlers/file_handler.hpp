@@ -1,12 +1,12 @@
 #ifndef _FILE_HANDLER_  
 #define _FILE_HANDLER_
 
-#include "club_data.hpp"
 #include <stdlib.h>
 #include <iostream>
 #include <regex>
 #include <sstream>
 #include <fstream>
+#include "../structs/club_data.hpp"
 
 class FileHandler {
     public:

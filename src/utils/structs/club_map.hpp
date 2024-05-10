@@ -3,19 +3,19 @@
 
 #include <stdlib.h>
 #include <map>
+#include <set>
 #include <vector>
-#include <queue>
 #include "client_data.hpp"
 
-typedef struct{
+struct ClubMap{
     //мапа номер места - юзер на этом месте
-    std::map<int, ClientData>& tableMap;
+    std::map<int, ClientData*> tableMap;
     //мапа юзер - номер места (если он занимает место)
     std::map<std::string, int> clientMap;
     //пул свободных столов
     std::vector<int> freeTables;
     //очередь клиентов в ожидании
-    std::queue<ClientData>& clientQueue;
-}ClubMap;
+    std::vector<std::string> clientQueue;
+};
 
 #endif

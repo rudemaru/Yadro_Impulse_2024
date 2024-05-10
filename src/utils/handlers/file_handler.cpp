@@ -38,7 +38,7 @@ void FileHandler::validCheck(ClubData &cd, std::string fp){
         std::string time_str = "";
         while(std::getline(file, temp_str)){
             if(std::regex_match(temp_str, event_regex)){
-                if(time_str < temp_str.substr(0, temp_str.find(' '))){
+                if(time_str <= temp_str.substr(0, temp_str.find(' '))){
                     time_str = temp_str.substr(0, temp_str.find(' '));
                 }else{
                     std::cout<<temp_str;
