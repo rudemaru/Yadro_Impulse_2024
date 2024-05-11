@@ -49,8 +49,6 @@ void FileHandler::validCheck(ClubData &cd, std::string fp){
                 exit(0);
             }
         }
-
-        std::cout<<"Файл соответствует требованиям к входным данным\n";
     }else{
         std::cout<<"Не удалось открыть файл\n";
     }

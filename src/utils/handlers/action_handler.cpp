@@ -37,7 +37,6 @@ void ActionHandler::handleTakeTable(const std::string comeTime, const std::strin
                 client = clubMap.tableMap[current_table];
 
                 int session_time = timeInMinutes(comeTime) - timeInMinutes(client->start_time);
-                std::cout<<clientName<<" "<<tableNumber<<" "<<session_time<<std::endl;
                 clubStat[tableNumber].timeTaken += session_time;
                 clubStat[tableNumber].totalProfit += ((session_time)/60)*clubData.price_per_hour;
                 if(session_time - (session_time/60)*60 != 0){
@@ -67,11 +66,9 @@ void ActionHandler::handleTakeTable(const std::string comeTime, const std::strin
 void ActionHandler::handleLeft(const std::string comeTime, const std::string clientName){
     if(clubMap.clientMap.contains(clientName)){
         int tableNumber = clubMap.clientMap[clientName];
-        std::cout<<tableNumber<<std::endl;
         if(tableNumber != 0 && clubMap.tableMap[tableNumber] != nullptr){
             ClientData *client = clubMap.tableMap[tableNumber]; 
             int session_time = timeInMinutes(comeTime) - timeInMinutes(client->start_time);
-            std::cout<<clientName<<" "<<tableNumber<<" "<<session_time<<std::endl;
             clubStat[tableNumber].timeTaken += session_time;
             clubStat[tableNumber].totalProfit += ((session_time)/60)*clubData.price_per_hour;
             if(session_time - (session_time/60)*60 != 0){
@@ -109,12 +106,10 @@ void ActionHandler::handleTakeFree(const std::string comeTime){
 void ActionHandler::handleKick(const std::string comeTime, const std::string clientName) {
     
     int tableNumber = clubMap.clientMap[clientName];
-    std::cout<<tableNumber<<std::endl;
 
     if(tableNumber != 0 && clubMap.tableMap[tableNumber] != nullptr){
         ClientData *client = clubMap.tableMap[tableNumber]; 
         int session_time = timeInMinutes(comeTime) - timeInMinutes(client->start_time);
-        std::cout<<clientName<<" "<<tableNumber<<" "<<session_time<<std::endl;
         clubStat[tableNumber].timeTaken += session_time;
         clubStat[tableNumber].totalProfit += ((session_time)/60)*clubData.price_per_hour;
         if(session_time - (session_time/60)*60 != 0){
@@ -135,9 +130,6 @@ void ActionHandler::run(ClubData cd, std::string fp){
         for(int i = 1; i <= cd.tables_count; i++){
             ClubStat cs = {0,0};
             clubStat.insert(std::make_pair(i, cs));
-        }
-        for(const auto& pair : clubStat){
-            std::cout<<pair.first<<" "<<pair.second.totalProfit<<" "<<pair.second.timeTaken<<std::endl;
         }
 
         int action;
@@ -183,10 +175,10 @@ void ActionHandler::run(ClubData cd, std::string fp){
         for(const auto& pair : clubMap.clientMap){
             handleKick(clubData.close_time, pair.first);
         }
+        std::cout<<clubData.close_time<<std::endl;
         for(const auto& pair : clubStat){
             printf("%d %d %d%d:%d%d\n", pair.first, pair.second.totalProfit, (pair.second.timeTaken/60)/10, (pair.second.timeTaken/60)%10, (pair.second.timeTaken%60)/10, (pair.second.timeTaken%60)%10);
         }
-        std::cout<<clubData.close_time<<std::endl;
     }else{
         std::cout<<"Не удалось открыть файл.\n";
     }
