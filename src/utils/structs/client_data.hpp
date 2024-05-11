@@ -1,7 +1,6 @@
 #ifndef _CLIENT_DATA_
 #define _CLIENT_DATA_
 
-#include <stdlib.h>
 #include <iostream>
 
 struct ClientData{

@@ -1,9 +1,7 @@
 #ifndef _CLUB_MAP_
 #define _CLUB_MAP_
 
-#include <stdlib.h>
 #include <map>
-#include <set>
 #include <vector>
 #include "client_data.hpp"
 

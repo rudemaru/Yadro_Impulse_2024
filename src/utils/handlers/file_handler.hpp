@@ -1,7 +1,6 @@
 #ifndef _FILE_HANDLER_  
 #define _FILE_HANDLER_
 
-#include <stdlib.h>
 #include <iostream>
 #include <regex>
 #include <sstream>
