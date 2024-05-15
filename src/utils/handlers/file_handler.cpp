@@ -38,6 +38,11 @@ void FileHandler::validCheck(ClubData &cd, std::string fp){
         std::string time_str = "";
         while(std::getline(file, temp_str)){
             if(std::regex_match(temp_str, event_regex)){
+                if(std::stoi(temp_str.substr(temp_str.find(' ') + 1, temp_str.find(' ') + 2)) == 2 && std::stoi(temp_str.substr(temp_str.find_last_of(' ') + 1, temp_str.size() - 1)) > cd.tables_count)
+                {
+                    std::cout<<temp_str;
+                    exit(0);
+                }
                 if(time_str <= temp_str.substr(0, temp_str.find(' '))){
                     time_str = temp_str.substr(0, temp_str.find(' '));
                 }else{
