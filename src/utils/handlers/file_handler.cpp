@@ -43,7 +43,7 @@ void FileHandler::validCheck(ClubData &cd, std::string fp){
                     std::cout<<temp_str;
                     exit(0);
                 }
-                if(time_str <= temp_str.substr(0, temp_str.find(' '))){
+                if(time_str <= temp_str.substr(0, temp_str.find(' ')) && time_str < cd.close_time){
                     time_str = temp_str.substr(0, temp_str.find(' '));
                 }else{
                     std::cout<<temp_str;

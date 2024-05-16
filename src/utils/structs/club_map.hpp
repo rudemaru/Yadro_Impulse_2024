@@ -3,13 +3,13 @@
 
 #include <map>
 #include <vector>
-#include "client_data.hpp"
+#include <set>
+#include "../structs/table_data.hpp"
 
 struct ClubMap{
-    //мапа номер места - юзер на этом месте
-    std::map<int, ClientData*> tableMap;
+    std::set<std::string> currentClients;
     //мапа юзер - номер места (если он занимает место)
-    std::map<std::string, int> clientMap;
+    std::map<std::string, TableData> clientMap;
     //пул свободных столов
     std::vector<int> freeTables;
     //очередь клиентов в ожидании

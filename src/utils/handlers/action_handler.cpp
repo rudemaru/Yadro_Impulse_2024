@@ -10,13 +10,16 @@ void ActionHandler::handleCome(const std::string comeTime, const std::string cli
         throw new Error(comeTime + " 13 NotOpenYet"); 
         return;
     }
-    if(clubMap.clientMap.contains(clientName)){
+    if(clubMap.currentClients.contains(clientName)){
         throw new Error(comeTime + " 13 YouShallNotPass");
         return;
     }
-    ClientData clientData = {"", "", clientName, 0};
-    clubMap.clientMap.insert(std::make_pair(clientName, 0));
-    clubMap.clientQueue.push_back(clientName);
+
+   TableData emptyTable = {0, ""};
+
+   clubMap.currentClients.insert(clientName);
+   clubMap.clientMap.insert(std::make_pair(clientName, emptyTable));
+   clubMap.clientQueue.push_back(clientName);
 }
 
 void ActionHandler::handleWait(const std::string comeTime, const std::string clientName) {
@@ -28,33 +31,42 @@ void ActionHandler::handleWait(const std::string comeTime, const std::string cli
     }
 }
 
+bool ActionHandler::isFree(int tableNumber){
+    auto it_ft = std::find(clubMap.freeTables.begin(), clubMap.freeTables.end(), tableNumber);
+    if(it_ft != clubMap.freeTables.end()){
+        return true;
+    }
+    return false;
+}
+
 void ActionHandler::handleTakeTable(const std::string comeTime, const std::string clientName, int tableNumber) {
-    if(clubMap.clientMap.contains(clientName)){
-        if(clubMap.tableMap[tableNumber] == nullptr){
-            ClientData *client = new ClientData{comeTime, "", clientName, tableNumber};
-            if(clubMap.clientMap[clientName] != 0){
-                int current_table = clubMap.clientMap[clientName];
-                client = clubMap.tableMap[current_table];
+    if(clubMap.currentClients.contains(clientName)){
+        if(isFree(tableNumber)){
+            if(clubMap.clientMap[clientName].number != 0){
+                TableData current_table = clubMap.clientMap[clientName];
 
-                int session_time = timeInMinutes(comeTime) - timeInMinutes(client->start_time);
-                clubStat[tableNumber].timeTaken += session_time;
-                clubStat[tableNumber].totalProfit += ((session_time)/60)*clubData.price_per_hour;
+                int session_time = timeInMinutes(comeTime) - timeInMinutes(current_table.last_start);
+                clubStat[current_table.number].timeTaken += session_time;
+                clubStat[current_table.number].totalProfit += ((session_time)/60)*clubData.price_per_hour;
                 if(session_time - (session_time/60)*60 != 0){
-                    clubStat[tableNumber].totalProfit += clubData.price_per_hour;
+                    clubStat[current_table.number].totalProfit += clubData.price_per_hour;
                 }
-
-                clubMap.freeTables.push_back(current_table);
-                clubMap.tableMap[current_table] = nullptr;
+                clubMap.freeTables.push_back(current_table.number);
             }
-            client->start_time = comeTime;
-            clubMap.clientMap[clientName] = tableNumber;
-            clubMap.tableMap[tableNumber] = client;
 
-            auto it = std::find(clubMap.freeTables.begin(), clubMap.freeTables.end(), tableNumber);
-            if(it != clubMap.freeTables.end()){
-                clubMap.freeTables.erase(it);
+            clubMap.clientMap[clientName].number = tableNumber;
+            clubMap.clientMap[clientName].last_start = comeTime;
+
+            auto it_ft = std::find(clubMap.freeTables.begin(), clubMap.freeTables.end(), tableNumber);
+            if(it_ft != clubMap.freeTables.end()){
+                clubMap.freeTables.erase(it_ft);
             }
-            clubMap.clientQueue.erase(clubMap.clientQueue.begin());
+
+            auto it_cq = std::find(clubMap.clientQueue.begin(), clubMap.clientQueue.end(), clientName);
+            if(it_cq != clubMap.clientQueue.end()){
+                clubMap.clientQueue.erase(it_cq);
+            }
+
         }else{
             throw new Error(comeTime + " 13 PlaceIsBusy");
         }
@@ -64,24 +76,25 @@ void ActionHandler::handleTakeTable(const std::string comeTime, const std::strin
 }
 
 void ActionHandler::handleLeft(const std::string comeTime, const std::string clientName){
-    if(clubMap.clientMap.contains(clientName)){
-        int tableNumber = clubMap.clientMap[clientName];
-        if(tableNumber != 0 && clubMap.tableMap[tableNumber] != nullptr){
-            ClientData *client = clubMap.tableMap[tableNumber]; 
-            int session_time = timeInMinutes(comeTime) - timeInMinutes(client->start_time);
-            clubStat[tableNumber].timeTaken += session_time;
-            clubStat[tableNumber].totalProfit += ((session_time)/60)*clubData.price_per_hour;
+    if(clubMap.currentClients.contains(clientName)){
+        TableData current_table = clubMap.clientMap[clientName];
+        if(current_table.number != 0){
+            int session_time = timeInMinutes(comeTime) - timeInMinutes(current_table.last_start);
+            clubStat[current_table.number].timeTaken += session_time;
+            clubStat[current_table.number].totalProfit += ((session_time)/60)*clubData.price_per_hour;
             if(session_time - (session_time/60)*60 != 0){
-                clubStat[tableNumber].totalProfit += clubData.price_per_hour;
+                clubStat[current_table.number].totalProfit += clubData.price_per_hour;
             }
-            clubMap.tableMap[tableNumber] = nullptr;
-            clubMap.freeTables.push_back(tableNumber);
+            clubMap.freeTables.push_back(current_table.number);
         }
         clubMap.clientMap.erase(clientName);
+        clubMap.currentClients.erase(clientName);
+
         auto it = std::find(clubMap.clientQueue.begin(), clubMap.clientQueue.end(), clientName);
         if(it != clubMap.clientQueue.end()){
             clubMap.clientQueue.erase(it);
         }
+
         handleTakeFree(comeTime);
     }else{
         throw new Error(comeTime + " 13 ClientUnknown");
@@ -91,13 +104,17 @@ void ActionHandler::handleLeft(const std::string comeTime, const std::string cli
 void ActionHandler::handleTakeFree(const std::string comeTime){
     if(!clubMap.clientQueue.empty()){
         std::string clientName = clubMap.clientQueue.front();
-        int freeTable = clubMap.freeTables.front();
-        ClientData *client = new ClientData{comeTime, "", clientName, freeTable};
-        clubMap.tableMap[freeTable] = client;
-        clubMap.clientMap[clientName] = freeTable;
-        std::cout<<comeTime<<" 12 "<<client->name<<" "<<client->current_table<<std::endl;
+        int freeTable = clubMap.freeTables.back();
+        
+        TableData newTable = {freeTable, comeTime};
+
+        clubMap.clientMap[clientName] = newTable;
+
+        std::cout<<comeTime<<" 12 "<<clientName<<" "<<clubMap.clientMap[clientName].number<<std::endl;
+
         clubMap.clientQueue.erase(clubMap.clientQueue.begin());
-        clubMap.freeTables.erase(clubMap.freeTables.begin());
+
+        clubMap.freeTables.pop_back();
     }else{
         return;
     }
@@ -105,17 +122,25 @@ void ActionHandler::handleTakeFree(const std::string comeTime){
 
 void ActionHandler::handleKick(const std::string comeTime, const std::string clientName) {
     
-    int tableNumber = clubMap.clientMap[clientName];
+    TableData current_table = clubMap.clientMap[clientName];
 
-    if(tableNumber != 0 && clubMap.tableMap[tableNumber] != nullptr){
-        ClientData *client = clubMap.tableMap[tableNumber]; 
-        int session_time = timeInMinutes(comeTime) - timeInMinutes(client->start_time);
-        clubStat[tableNumber].timeTaken += session_time;
-        clubStat[tableNumber].totalProfit += ((session_time)/60)*clubData.price_per_hour;
+    if(current_table.number != 0){
+        int session_time = timeInMinutes(comeTime) - timeInMinutes(current_table.last_start);
+        clubStat[current_table.number].timeTaken += session_time;
+        clubStat[current_table.number].totalProfit += ((session_time)/60)*clubData.price_per_hour;
         if(session_time - (session_time/60)*60 != 0){
-            clubStat[tableNumber].totalProfit += clubData.price_per_hour;
+            clubStat[current_table.number].totalProfit += clubData.price_per_hour;
         }
     }
+    
+    auto it = std::find(clubMap.clientQueue.begin(), clubMap.clientQueue.end(), clientName);
+        if(it != clubMap.clientQueue.end()){
+            clubMap.clientQueue.erase(it);
+        }
+    
+    clubMap.currentClients.erase(clientName);
+    clubMap.clientMap.erase(clientName);
+
     std::cout<<comeTime<<" "<<11<<" "<<clientName<<std::endl;
 }
 
@@ -128,7 +153,7 @@ void ActionHandler::run(ClubData cd, std::string fp){
             std::getline(file, temp_str);
         }
         for(int i = 1; i <= cd.tables_count; i++){
-            ClubStat cs = {0,0};
+            TableStat cs = {0,0};
             clubStat.insert(std::make_pair(i, cs));
         }
 
@@ -172,15 +197,16 @@ void ActionHandler::run(ClubData cd, std::string fp){
                 std::cout<<e->what()<<std::endl;
             }
         }
-        for(const auto& pair : clubMap.clientMap){
+        std::map<std::string, TableData> clientMap_trace = clubMap.clientMap; 
+        for (auto pair : clientMap_trace) {
             handleKick(clubData.close_time, pair.first);
         }
         std::cout<<clubData.close_time<<std::endl;
-        for(const auto& pair : clubStat){
-            printf("%d %d %d%d:%d%d\n", pair.first, pair.second.totalProfit, (pair.second.timeTaken/60)/10, (pair.second.timeTaken/60)%10, (pair.second.timeTaken%60)/10, (pair.second.timeTaken%60)%10);
+        for (std::map<int, TableStat>::iterator it = clubStat.begin(); it!= clubStat.end(); ++it) {
+            printf("%d %d %d%d:%d%d\n", it->first, it->second.totalProfit, (it->second.timeTaken / 60) / 10, (it->second.timeTaken / 60) % 10, (it->second.timeTaken % 60) / 10, (it->second.timeTaken % 60) % 10);
         }
     }else{
-        std::cout<<"Не удалось открыть файл.\n";
+        std::cout<<"Ошибка при открытии файла.\n";
     }
 }
 

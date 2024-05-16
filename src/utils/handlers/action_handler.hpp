@@ -2,7 +2,7 @@
 #define _ACTION_HANDLER_
 
 #include "../structs/club_data.hpp"
-#include "../structs/club_stat.hpp"
+#include "../structs/table_stat.hpp"
 #include "../structs/club_map.hpp"
 #include "../exceptions/exceptions.hpp"
 #include <fstream>
@@ -13,7 +13,7 @@ class ActionHandler{
 
     ClubData clubData;
 
-    std::map<int, ClubStat> clubStat;
+    std::map<int, TableStat> clubStat;
 
     ClubMap clubMap;
 
@@ -75,6 +75,8 @@ class ActionHandler{
         */
 
         void run(ClubData cd, std::string fp);
+
+        bool isFree(int);
 
 };
 
